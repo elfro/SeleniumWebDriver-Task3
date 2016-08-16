@@ -14,10 +14,8 @@ public class Calculator {
     private WebDriver driver;
     private String baseUrl;
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     public void setUp() throws Exception {
-        /*System.setProperty("webdriver.ie.driver", System.getProperty("user.dir")+"\\src\\test\\resources\\IEDriverServer64.exe");
-        driver = new InternetExplorerDriver();*/
         System.setProperty("webdriver.gecko.driver", System.getProperty("user.dir") + "\\src\\test\\resources\\geckodriver.exe");
         DesiredCapabilities capabilities = DesiredCapabilities.firefox();
         capabilities.setCapability("marionette", true);
@@ -27,7 +25,7 @@ public class Calculator {
         baseUrl = "http://www.paycheckcity.com/";
     }
 
-    @Test(groups = {"regression", "p1"}, dataProvider = "calculatorData", dataProviderClass = DataProviderClass.class)
+    @Test(dataProvider = "calculatorData", dataProviderClass = DataProviderClass.class, groups = {"regression"})
     public void testSalary(String calcDate,
                            String state,
                            String grossPay,
@@ -60,14 +58,13 @@ public class Calculator {
 
     }
 
-
-    @Test(groups = {"regression"}, dataProvider = "hourlyData", dataProviderClass = DataProviderClass.class)
+    @Test(groups = {"regression", "p1"}, dataProvider = "hourlyData", dataProviderClass = DataProviderClass.class)
     public void testHourly(String payRate,
                            String hours,
                            String payRate1,
                            String hours1,
                            String expectedGrossPay) throws Exception {
-        driver.get(baseUrl+"calculator/hourly/");
+        driver.get(baseUrl + "calculator/hourly/");
         WebElement payRateElement = driver.findElement(By.id("calcType.rates0.payRate"));
         payRateElement.clear();
         payRateElement.sendKeys(payRate);
@@ -90,10 +87,10 @@ public class Calculator {
 
     }
 
-    @AfterClass
+    /*@AfterClass
     public void tearDown() throws Exception {
         driver.quit(); //https://bugzilla.mozilla.org/show_bug.cgi?id=1051567#c34
     }
-
+*/
 
 }
