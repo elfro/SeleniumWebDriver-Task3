@@ -25,36 +25,32 @@ public class Calculator {
         baseUrl = "http://www.paycheckcity.com/";
     }
 
-    @Test(dataProvider = "calculatorData", dataProviderClass = DataProviderClass.class, groups = {"regression"})
-    public void testSalary(String calcDate,
-                           String state,
-                           String grossPay,
-                           String grossPayType,
-                           String payFrequency,
-                           String iAmExemptFrom,
-                           String expectedNetPayResult)
-            throws Exception {
+    @Test(groups = {"regression", "p1"})
+    public void testSalary() throws Exception {
+        String expectedNetPayResult = "$8,387.79";
         driver.get(baseUrl + "calculator/salary/");
         WebElement calcDateElement = driver.findElement(By.id("calcDate"));
         calcDateElement.clear();
-        calcDateElement.sendKeys(calcDate);
+        calcDateElement.sendKeys("08/31/2016");
         driver.findElement(By.xpath(".//div[@id='widget_state']//input[@class='dijitReset dijitInputField dijitArrowButtonInner']")).click();
-        driver.findElement(By.xpath(".//div[@id='state_popup']//div[text()='" + state + "']")).click();
+        driver.findElement(By.xpath(".//div[@id='state_popup']//div[text()='California']")).click();
         WebElement grossPayElement = driver.findElement(By.id("generalInformation.grossPayAmount"));
         grossPayElement.clear();
-        grossPayElement.sendKeys(grossPay);
+        grossPayElement.sendKeys("10000");
         driver.findElement(By.xpath(".//div[@id='widget_generalInformation.grossPayMethodType']//input[@class=\"dijitReset dijitInputField dijitArrowButtonInner\"]")).click();
-        driver.findElement(By.xpath(".//div[@id=\"generalInformation.grossPayMethodType_popup\"]//div[text()='" + grossPayType + "']")).click();
+        driver.findElement(By.xpath(".//div[@id=\"generalInformation.grossPayMethodType_popup\"]//div[text()='Pay Per Period']")).click();
         driver.findElement(By.xpath(".//div[@id='widget_generalInformation.payFrequencyType']//input[@class=\"dijitReset dijitInputField dijitArrowButtonInner\"]")).click();
-        driver.findElement(By.xpath(".//div[@id=\"generalInformation.payFrequencyType_popup\"]//div[text()='" + payFrequency + "']")).click();
-        driver.findElement(By.xpath(".//input[@name='generalInformation.exempt" + iAmExemptFrom + "']")).click();
+        driver.findElement(By.xpath(".//div[@id=\"generalInformation.payFrequencyType_popup\"]//div[text()='Monthly']")).click();
+
+        driver.findElement(By.xpath(".//input[@name='generalInformation.exemptFederal']")).click();
         driver.findElement(By.id("calculate")).click();
         Wait fluenWait = new FluentWait(driver)
                 .withTimeout(300, TimeUnit.SECONDS)
                 .pollingEvery(2, TimeUnit.SECONDS)
                 .ignoring(NoSuchElementException.class);
         fluenWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultDef\" and text()=\"Net Pay\"]")));
-        Assert.assertEquals(expectedNetPayResult, driver.findElement(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultData\"]")).getText());
+        String actualNetPayResult = driver.findElement(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultData\"]")).getText();
+        Assert.assertEquals(expectedNetPayResult, actualNetPayResult);
 
     }
 
@@ -83,14 +79,13 @@ public class Calculator {
         By grossPayLocator = By.xpath(".//span[@class=\"resultDef\" and text()=\"Gross Pay\"]");
         (new WebDriverWait(driver, 1000))
                 .until(ExpectedConditions.visibilityOfElementLocated(grossPayLocator));
-        Assert.assertEquals(expectedGrossPay, driver.findElement(By.xpath(".//span[@class=\"resultDef\" and text()=\"Gross Pay\"]/following-sibling::node()[2]")).getText());
+        String actualResultGrossPay = driver.findElement(By.xpath(".//span[@class=\"resultDef\" and text()=\"Gross Pay\"]/following-sibling::node()[2]")).getText();
+        Assert.assertEquals(actualResultGrossPay, expectedGrossPay);
 
     }
 
-    /*@AfterClass
+    @AfterClass(alwaysRun = true)
     public void tearDown() throws Exception {
-        driver.quit(); //https://bugzilla.mozilla.org/show_bug.cgi?id=1051567#c34
+        driver.quit();
     }
-*/
-
 }
