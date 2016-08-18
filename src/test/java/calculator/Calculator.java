@@ -1,5 +1,9 @@
 package calculator;
 
+import org.junit.Rule;
+import org.junit.rules.ErrorCollector;
+import org.openqa.selenium.firefox.GeckoDriverService;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.WebDriver;
@@ -90,6 +94,26 @@ public class Calculator {
         fluenWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultDef\" and text()=\"Net Pay\"]")));
         double actualNetPayResult = Double.parseDouble(driver.findElement(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultData\"]")).getText().replace("$","").replace(",",""));
         assertThat(actualNetPayResult, is(closeTo(expectedNetPayResult, 5)));
+    }
+
+    @Rule
+    public ErrorCollector collector = new ErrorCollector();
+
+    @Test
+    public void buyIphone() throws Exception {
+        driver.get("http://city.com.ua/goods/smartphones/apple-iphone-6s-16gb-rose-gold.html");
+        driver.findElement(By.id("buy_credit_btn")).click();
+
+        (new WebDriverWait(driver, 1000))
+                .until(ExpectedConditions.presenceOfElementLocated(By.xpath(".//div[@class=\"fancy_title\"]")));
+        WebElement input = driver.findElement(By.className("downpayment r3"));
+        Actions builder = new Actions(driver);
+        builder.sendKeys(input, "2000").click().perform();
+
+        int PUMB= Integer.parseInt(driver.findElement(By.xpath(".//tr[2]/td[3]")).getText().replace(" грн", ""));
+        int alfaBank= Integer.parseInt(driver.findElement(By.xpath(".//tr[3]/td[3]")).getText().replace(" грн", ""));
+        collector.checkThat(PUMB, equalTo(1519));
+        collector.checkThat(alfaBank, equalTo(1479));
     }
 
     @AfterClass
