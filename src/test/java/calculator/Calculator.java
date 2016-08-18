@@ -12,6 +12,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,19 +30,19 @@ public class Calculator {
     private String grossPayType;
     private String payFrequency ;
     private Boolean iAmExemptFrom;
-    private String expectedNetPayResult;
+    private double expectedNetPayResult;
 
     @Parameterized.Parameters
     public  static Collection salaryData() {
         return Arrays.asList(
                 new Object[][]{
-                        { "12/31/2016", "Alaska", "1999", "Pay Per Period", "Weekly", false, "$1,422.37" },
-                        { "12/31/2017", "Hawaii", "75000", "Annually", "Annual", false, "$49,701.43"}
+                        { "12/31/2016", "Alaska", "1999", "Pay Per Period", "Weekly", false, 1422.37 },
+                        { "12/31/2017", "Hawaii", "75000", "Annually", "Annual", false, 49701.43}
                 }
         );
     }
 
-    public Calculator (String calcDate, String state, String grossPay, String grossPayType, String payFrequency, Boolean iAmExemptFrom, String expectedNetPayResult) {
+    public Calculator (String calcDate, String state, String grossPay, String grossPayType, String payFrequency, Boolean iAmExemptFrom, double expectedNetPayResult) {
         this.calcDate=calcDate;
         this.state = state;
         this.grossPay = grossPay;
@@ -86,9 +88,8 @@ public class Calculator {
                 .pollingEvery(2, TimeUnit.SECONDS)
                 .ignoring(NoSuchElementException.class);
         fluenWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultDef\" and text()=\"Net Pay\"]")));
-        String actualNetPayResult = driver.findElement(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultData\"]")).getText();
-        org.junit.Assert.assertEquals(expectedNetPayResult, actualNetPayResult);
-
+        double actualNetPayResult = Double.parseDouble(driver.findElement(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultData\"]")).getText().replace("$","").replace(",",""));
+        assertThat(actualNetPayResult, is(closeTo(expectedNetPayResult, 5)));
     }
 
     @AfterClass
