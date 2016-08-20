@@ -1,91 +1,86 @@
 package calculator;
 
-import dataproviders.DataProviderClass;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.support.ui.*;
-import org.testng.annotations.*;
-import org.testng.Assert;
-import org.openqa.selenium.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.FluentWait;
+import org.openqa.selenium.support.ui.Wait;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class Calculator {
-    private WebDriver driver;
-    private String baseUrl;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.is;
 
-    @BeforeClass(alwaysRun = true)
-    public void setUp() throws Exception {
-        System.setProperty("webdriver.gecko.driver", System.getProperty("user.dir") + "\\src\\test\\resources\\geckodriver.exe");
-        DesiredCapabilities capabilities = DesiredCapabilities.firefox();
-        capabilities.setCapability("marionette", true);
-        driver = new FirefoxDriver(capabilities);
-        driver.manage().window().maximize();
-        driver.manage().timeouts().implicitlyWait(100, TimeUnit.SECONDS);
-        baseUrl = "http://www.paycheckcity.com/";
+@RunWith(Parameterized.class)
+public class Calculator extends BaseTest {
+
+    private String calcDate;
+    private String state;
+    private String grossPay;
+    private String grossPayType;
+    private String payFrequency;
+    private Boolean iAmExemptFrom;
+    private double expectedNetPayResult;
+
+    @Parameterized.Parameters
+    public static Collection salaryData() {
+        return Arrays.asList(
+                new Object[][]{
+                        {"12/31/2016", "Alaska", "1999", "Pay Per Period", "Weekly", false, 1422.37},
+                        {"12/31/2017", "Hawaii", "75000", "Annually", "Annual", false, 49701.43}
+                }
+        );
     }
 
-    @Test(groups = {"regression", "p1"})
+    public Calculator(String calcDate, String state, String grossPay, String grossPayType, String payFrequency, Boolean iAmExemptFrom, double expectedNetPayResult) {
+        this.calcDate = calcDate;
+        this.state = state;
+        this.grossPay = grossPay;
+        this.grossPayType = grossPayType;
+        this.payFrequency = payFrequency;
+        this.iAmExemptFrom = iAmExemptFrom;
+        this.expectedNetPayResult = expectedNetPayResult;
+    }
+
+
+    @Test
     public void testSalary() throws Exception {
-        String expectedNetPayResult = "$8,387.79";
-        driver.get(baseUrl + "calculator/salary/");
+        driver.get("http://www.paycheckcity.com/calculator/salary/");
         WebElement calcDateElement = driver.findElement(By.id("calcDate"));
         calcDateElement.clear();
-        calcDateElement.sendKeys("08/31/2016");
-        driver.findElement(By.xpath(".//div[@id='widget_state']//input[@class='dijitReset dijitInputField dijitArrowButtonInner']")).click();
-        driver.findElement(By.xpath(".//div[@id='state_popup']//div[text()='California']")).click();
+        calcDateElement.sendKeys(calcDate);
+        WebElement stateElement = driver.findElement(By.id("state"));
+        stateElement.clear();
+        stateElement.sendKeys(state);
         WebElement grossPayElement = driver.findElement(By.id("generalInformation.grossPayAmount"));
         grossPayElement.clear();
-        grossPayElement.sendKeys("10000");
-        driver.findElement(By.xpath(".//div[@id='widget_generalInformation.grossPayMethodType']//input[@class=\"dijitReset dijitInputField dijitArrowButtonInner\"]")).click();
-        driver.findElement(By.xpath(".//div[@id=\"generalInformation.grossPayMethodType_popup\"]//div[text()='Pay Per Period']")).click();
-        driver.findElement(By.xpath(".//div[@id='widget_generalInformation.payFrequencyType']//input[@class=\"dijitReset dijitInputField dijitArrowButtonInner\"]")).click();
-        driver.findElement(By.xpath(".//div[@id=\"generalInformation.payFrequencyType_popup\"]//div[text()='Monthly']")).click();
+        grossPayElement.sendKeys(grossPay);
+        WebElement grossPayTypeElement = driver.findElement(By.id("generalInformation.grossPayMethodType"));
+        grossPayTypeElement.clear();
+        grossPayTypeElement.sendKeys(grossPayType);
+        WebElement payFrequencyElement = driver.findElement(By.id("generalInformation.payFrequencyType"));
+        payFrequencyElement.clear();
+        payFrequencyElement.sendKeys(payFrequency);
+        Boolean valueOfCheckBox = driver.findElement(By.xpath(".//input[@name='generalInformation.exemptFederal']")).isSelected();
+        if (iAmExemptFrom != valueOfCheckBox) {
+            driver.findElement(By.xpath(".//input[@name='generalInformation.exemptFederal']")).click();
+        }
 
-        driver.findElement(By.xpath(".//input[@name='generalInformation.exemptFederal']")).click();
         driver.findElement(By.id("calculate")).click();
         Wait fluenWait = new FluentWait(driver)
                 .withTimeout(300, TimeUnit.SECONDS)
                 .pollingEvery(2, TimeUnit.SECONDS)
                 .ignoring(NoSuchElementException.class);
-        fluenWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultDef\" and text()=\"Net Pay\"]")));
-        String actualNetPayResult = driver.findElement(By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultData\"]")).getText();
-        Assert.assertEquals(expectedNetPayResult, actualNetPayResult);
-
-    }
-
-    @Test(groups = {"regression", "p1"}, dataProvider = "hourlyData", dataProviderClass = DataProviderClass.class)
-    public void testHourly(String payRate,
-                           String hours,
-                           String payRate1,
-                           String hours1,
-                           String expectedGrossPay) throws Exception {
-        driver.get(baseUrl + "calculator/hourly/");
-        WebElement payRateElement = driver.findElement(By.id("calcType.rates0.payRate"));
-        payRateElement.clear();
-        payRateElement.sendKeys(payRate);
-        WebElement hoursElement = driver.findElement(By.id("calcType.rates0.hours"));
-        hoursElement.clear();
-        hoursElement.sendKeys(hours);
-        driver.findElement(By.id("addRate")).click();
-        WebElement payRateElement1 = driver.findElement(By.id("calcType.rates1.payRate"));
-        payRateElement1.clear();
-        payRateElement1.sendKeys(payRate1);
-        WebElement hoursElement1 = driver.findElement(By.id("calcType.rates1.hours"));
-        hoursElement1.clear();
-        hoursElement1.sendKeys(hours1);
-        driver.findElement(By.id("calculate")).click();
-
-        By grossPayLocator = By.xpath(".//span[@class=\"resultDef\" and text()=\"Gross Pay\"]");
-        (new WebDriverWait(driver, 1000))
-                .until(ExpectedConditions.visibilityOfElementLocated(grossPayLocator));
-        String actualResultGrossPay = driver.findElement(By.xpath(".//span[@class=\"resultDef\" and text()=\"Gross Pay\"]/following-sibling::node()[2]")).getText();
-        Assert.assertEquals(actualResultGrossPay, expectedGrossPay);
-
-    }
-
-    @AfterClass(alwaysRun = true)
-    public void tearDown() throws Exception {
-        driver.quit();
+        By netPayValue = By.xpath(".//div[@id=\"dijit_TitlePane_1_pane\"]//span[@class=\"resultData\"]");
+        fluenWait.until(ExpectedConditions.visibilityOfElementLocated(netPayValue));
+        double actualNetPayResult = Double.parseDouble(driver.findElement(netPayValue).getText().replace("$", "").replace(",", ""));
+        assertThat(actualNetPayResult, is(closeTo(expectedNetPayResult, 5)));
     }
 }
