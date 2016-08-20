@@ -28,7 +28,7 @@ public class BuyIPhone extends BaseTest {
 
         int pumb = Integer.parseInt(driver.findElement(By.xpath(".//tr[2]/td[3]")).getText().replace(" грн", ""));
         int alfaBank = Integer.parseInt(driver.findElement(By.xpath(".//tr[3]/td[3]")).getText().replace(" грн", ""));
-        collector.checkThat(PUMB, equalTo(1519));
+        collector.checkThat(pumb, equalTo(1519));
         collector.checkThat(alfaBank, equalTo(1479));
         driver.switchTo().defaultContent();
     }
